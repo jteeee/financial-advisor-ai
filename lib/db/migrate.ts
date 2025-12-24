@@ -9,6 +9,12 @@ config({
 });
 
 const runMigrate = async () => {
+  // Skip migrations in Vercel build environment (run manually or via CI)
+  if (process.env.VERCEL) {
+    console.log("⏭️  Running in Vercel build, skipping migrations");
+    process.exit(0);
+  }
+
   // Check for POSTGRES_URL (set by Vercel or .env.local)
   if (!process.env.POSTGRES_URL) {
     console.log("⏭️  POSTGRES_URL not defined, skipping migrations");
