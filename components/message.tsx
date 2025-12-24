@@ -339,6 +339,49 @@ const PurePreviewMessage = ({
               );
             }
 
+            // Handle all Financial Advisor tools generically
+            if (type.startsWith("tool-")) {
+              const { toolCallId, state } = part as {
+                toolCallId: string;
+                state: string;
+                input?: unknown;
+                output?: unknown;
+                errorText?: string;
+              };
+              const toolPart = part as {
+                input?: unknown;
+                output?: unknown;
+                errorText?: string;
+              };
+
+              return (
+                <Tool defaultOpen={false} key={toolCallId}>
+                  <ToolHeader state={state as "input-available" | "output-available" | "output-error"} type={type as `tool-${string}`} />
+                  <ToolContent>
+                    {(state === "input-available" || state === "input-streaming") && toolPart.input && (
+                      <ToolInput input={toolPart.input} />
+                    )}
+                    {state === "output-available" && toolPart.output && (
+                      <ToolOutput
+                        errorText={undefined}
+                        output={
+                          <pre className="whitespace-pre-wrap text-xs p-2">
+                            {JSON.stringify(toolPart.output, null, 2)}
+                          </pre>
+                        }
+                      />
+                    )}
+                    {state === "output-error" && (
+                      <ToolOutput
+                        errorText={toolPart.errorText || "An error occurred"}
+                        output={null}
+                      />
+                    )}
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
             return null;
           })}
 

@@ -1,71 +1,216 @@
-<a href="https://chat.vercel.ai/">
-  <img alt="Next.js 14 and App Router-ready AI chatbot." src="app/(chat)/opengraph-image.png">
-  <h1 align="center">Chat SDK</h1>
-</a>
+# WealthAI Advisor
 
-<p align="center">
-    Chat SDK is a free, open-source template built with Next.js and the AI SDK that helps you quickly build powerful chatbot applications.
-</p>
-
-<p align="center">
-  <a href="https://chat-sdk.dev"><strong>Read Docs</strong></a> ·
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running locally</strong></a>
-</p>
-<br/>
+AI-powered Financial Advisor Workstation built on Vercel's Chat SDK with AI SDK 6.
 
 ## Features
 
-- [Next.js](https://nextjs.org) App Router
-  - Advanced routing for seamless navigation and performance
-  - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
-- [AI SDK](https://ai-sdk.dev/docs/introduction)
-  - Unified API for generating text, structured objects, and tool calls with LLMs
-  - Hooks for building dynamic chat and generative user interfaces
-  - Supports xAI (default), OpenAI, Fireworks, and other model providers
-- [shadcn/ui](https://ui.shadcn.com)
-  - Styling with [Tailwind CSS](https://tailwindcss.com)
-  - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
-- Data Persistence
-  - [Neon Serverless Postgres](https://vercel.com/marketplace/neon) for saving chat history and user data
-  - [Vercel Blob](https://vercel.com/storage/blob) for efficient file storage
-- [Auth.js](https://authjs.dev)
-  - Simple and secure authentication
+### Core Capabilities
+- **Multi-Model Support**: Claude, GPT, Gemini, Grok via Vercel AI Gateway
+- **Streaming Responses**: Real-time streaming with resumable streams
+- **Artifacts System**: Create documents, code snippets, and spreadsheets
+- **Tool Calling**: AI can execute functions with human-in-the-loop approval
+- **File Attachments**: Upload and analyze documents
+- **Chat History**: Persistent conversation storage
 
-## Model Providers
+### Financial Advisor Tools
 
-This template uses the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access multiple AI models through a unified interface. The default configuration includes [xAI](https://x.ai) models (`grok-2-vision-1212`, `grok-3-mini`) routed through the gateway.
+| Tool | Description |
+|------|-------------|
+| `searchClients` | Search for clients by name, email, or account number |
+| `getClientProfile` | Get detailed client information |
+| `getPortfolioHoldings` | View current positions and values |
+| `getPortfolioPerformance` | Returns vs benchmarks across time periods |
+| `getAssetAllocation` | Target vs actual allocation with drift analysis |
+| `getMarketQuote` | Current quotes for stocks and ETFs |
+| `getMultipleQuotes` | Batch quote retrieval |
+| `searchMarketNews` | Financial news filtered by symbols or topics |
+| `getMarketOverview` | Major indices, sector performance, yields |
+| `searchKnowledgeBase` | Firm policies, procedures, and best practices |
+| `getKnowledgeBaseArticle` | Retrieve specific knowledge base content |
 
-### AI Gateway Authentication
+### Pre-loaded Knowledge Base
+- Investment Policy Statement Guidelines
+- Rebalancing Best Practices
+- Client Communication Standards
+- Fee Schedule and Billing
+- Risk Assessment Procedures
+- ESG and Sustainable Investing
+- Retirement Planning Guidelines
+- Tax-Loss Harvesting Procedures
 
-**For Vercel deployments**: Authentication is handled automatically via OIDC tokens.
+## Tech Stack
 
-**For non-Vercel deployments**: You need to provide an AI Gateway API key by setting the `AI_GATEWAY_API_KEY` environment variable in your `.env.local` file.
+- **Framework**: Next.js 16 (App Router)
+- **AI SDK**: v6 with ToolLoopAgent patterns
+- **AI Gateway**: Vercel AI Gateway (100+ models)
+- **Database**: PostgreSQL (Supabase/Neon)
+- **ORM**: Drizzle
+- **UI**: shadcn/ui + Tailwind CSS
+- **Auth**: Auth.js (NextAuth)
 
-With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to direct LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
+## Getting Started
 
-## Deploy Your Own
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database (Supabase recommended)
+- Vercel AI Gateway API key
 
-You can deploy your own version of the Next.js AI Chatbot to Vercel with one click:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/templates/next.js/nextjs-ai-chatbot)
-
-## Running locally
-
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
-
-> Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
-
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
+### Installation
 
 ```bash
-pnpm install
-pnpm db:migrate # Setup database or apply latest database changes
-pnpm dev
+# Clone the repository
+cd financial-advisor-ai
+
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your credentials
+
+# Run database migrations
+npm run db:migrate
+
+# Start development server
+npm run dev
 ```
 
-Your app template should now be running on [localhost:3000](http://localhost:3000).
+### Environment Variables
+
+```env
+# Required
+AUTH_SECRET=your-auth-secret-32-chars
+AI_GATEWAY_API_KEY=your-vercel-ai-gateway-key
+POSTGRES_URL=your-supabase-connection-string
+
+# Optional
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
+REDIS_URL=your-redis-url-for-resumable-streams
+```
+
+## Project Structure
+
+```
+financial-advisor-ai/
+├── app/
+│   ├── (auth)/          # Authentication routes
+│   └── (chat)/          # Chat interface
+│       └── api/
+│           └── chat/    # Chat API with tools
+├── lib/
+│   ├── ai/
+│   │   ├── tools/       # Financial advisor tools
+│   │   │   ├── search-clients.ts
+│   │   │   ├── portfolio.ts
+│   │   │   ├── market-data.ts
+│   │   │   └── knowledge-base.ts
+│   │   ├── financial-advisor-prompts.ts
+│   │   └── providers.ts
+│   └── db/
+│       └── schema/
+│           └── financial-advisor.ts  # Client/portfolio schema
+├── components/
+│   ├── ai-elements/     # Pre-built AI UI components
+│   └── ...
+└── artifacts/           # Document generation
+```
+
+## Customization
+
+### Adding New Tools
+
+1. Create a new tool file in `lib/ai/tools/`:
+
+```typescript
+import { tool } from "ai";
+import { z } from "zod";
+
+export const myNewTool = tool({
+  description: "Description for the AI",
+  inputSchema: z.object({
+    param: z.string().describe("Parameter description"),
+  }),
+  execute: async ({ param }) => {
+    // Your logic here
+    return { result: "data" };
+  },
+});
+```
+
+2. Import and add to `app/(chat)/api/chat/route.ts`:
+
+```typescript
+import { myNewTool } from "@/lib/ai/tools/my-new-tool";
+
+// Add to tools object
+tools: {
+  myNewTool,
+  // ... other tools
+}
+
+// Add to experimental_activeTools array
+experimental_activeTools: [
+  "myNewTool",
+  // ... other tools
+]
+```
+
+### Connecting Real Data Sources
+
+The current tools use mock data. To connect real data:
+
+1. **Portfolio Data**: Replace mock data with API calls to:
+   - BlackDiamond
+   - Orion
+   - Tamarac
+   - Envestnet
+
+2. **Market Data**: Integrate with:
+   - Alpha Vantage
+   - Yahoo Finance
+   - Bloomberg API
+   - Polygon.io
+
+3. **Client Data**: Connect to your CRM:
+   - Salesforce
+   - Redtail
+   - Wealthbox
+   - Custom database
+
+### Adding RAG with Embeddings
+
+1. Enable pgvector in your Supabase database
+2. Uncomment the `embedding` column in `lib/db/schema/financial-advisor.ts`
+3. Use `embed()` from AI SDK to generate embeddings
+4. Update `searchKnowledgeBase` to use cosine similarity
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Import to Vercel
+3. Add environment variables
+4. Deploy
+
+### Self-Hosted
+
+```bash
+npm run build
+npm start
+```
+
+## TODO
+
+- [ ] Fix Supabase database connection (need correct region)
+- [ ] Add real portfolio data integration
+- [ ] Implement Azure AD authentication
+- [ ] Add real-time market data
+- [ ] Enable pgvector for RAG embeddings
+- [ ] Add email integration (Microsoft Graph)
+- [ ] Add file storage integration (Box.com)
+- [ ] Implement row-level security
+
+## License
+
+Based on Vercel's Chat SDK - see original LICENSE file.

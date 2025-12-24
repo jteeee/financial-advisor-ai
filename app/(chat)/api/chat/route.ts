@@ -14,12 +14,26 @@ import {
 } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
+import { type RequestHints, systemPrompt } from "@/lib/ai/financial-advisor-prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
+// Financial Advisor Tools
+import { searchClients, getClientProfile } from "@/lib/ai/tools/search-clients";
+import {
+  getPortfolioHoldings,
+  getPortfolioPerformance,
+  getAssetAllocation,
+} from "@/lib/ai/tools/portfolio";
+import {
+  getMarketQuote,
+  getMultipleQuotes,
+  searchMarketNews,
+  getMarketOverview,
+} from "@/lib/ai/tools/market-data";
+import { searchKnowledgeBase, getKnowledgeBaseArticle } from "@/lib/ai/tools/knowledge-base";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -179,10 +193,23 @@ export async function POST(request: Request) {
           experimental_activeTools: isReasoningModel
             ? []
             : [
+                // Original tools
                 "getWeather",
                 "createDocument",
                 "updateDocument",
                 "requestSuggestions",
+                // Financial Advisor tools
+                "searchClients",
+                "getClientProfile",
+                "getPortfolioHoldings",
+                "getPortfolioPerformance",
+                "getAssetAllocation",
+                "getMarketQuote",
+                "getMultipleQuotes",
+                "searchMarketNews",
+                "getMarketOverview",
+                "searchKnowledgeBase",
+                "getKnowledgeBaseArticle",
               ],
           experimental_transform: isReasoningModel
             ? undefined
@@ -195,6 +222,7 @@ export async function POST(request: Request) {
               }
             : undefined,
           tools: {
+            // Original tools
             getWeather,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
@@ -202,6 +230,21 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            // Financial Advisor tools - Client Management
+            searchClients,
+            getClientProfile,
+            // Portfolio tools
+            getPortfolioHoldings,
+            getPortfolioPerformance,
+            getAssetAllocation,
+            // Market Data tools
+            getMarketQuote,
+            getMultipleQuotes,
+            searchMarketNews,
+            getMarketOverview,
+            // Knowledge Base tools
+            searchKnowledgeBase,
+            getKnowledgeBaseArticle,
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
