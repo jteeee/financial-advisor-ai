@@ -2,6 +2,51 @@ import { tool } from "ai";
 import { z } from "zod";
 import { clientsDb, isClientsDbAvailable } from "@/lib/db/clients-db";
 
+// Types for database results
+interface ClientSearchResult {
+  full_name: string;
+  first_name: string;
+  last_name: string;
+  accounts: Array<{
+    id: string;
+    account_number: string;
+    name: string;
+    type: string;
+    value: number;
+    custodian: string;
+  }>;
+  total_aum: string | number;
+  account_count: string | number;
+}
+
+interface AccountResult {
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  owner_type: string;
+  account_id: string;
+  account_number: string;
+  account_name: string;
+  account_type: string;
+  market_value: string | number | null;
+  cost_basis: string | number | null;
+  unrealized_gain_loss: string | number | null;
+  custodian: string;
+  inception_date: string | null;
+  is_billable: boolean;
+  is_discretionary: boolean;
+}
+
+interface HoldingResult {
+  ticker: string;
+  asset_name: string;
+  asset_class: string;
+  units: string | number | null;
+  market_value: string | number | null;
+  cost_basis: string | number | null;
+  unrealized_gain_loss: string | number | null;
+}
+
 // Mock data for fallback when database is not available
 const mockClients = [
   {
@@ -42,14 +87,14 @@ const mockClients = [
 ];
 
 // Search clients in the real database
-async function searchClientsInDb(query: string, limit: number) {
+async function searchClientsInDb(query: string, limit: number): Promise<ClientSearchResult[] | null> {
   if (!clientsDb) return null;
 
   try {
     // Search across account_owners joined with accounts for rich client data
     const searchPattern = `%${query}%`;
 
-    const results = await clientsDb`
+    const results = await clientsDb<ClientSearchResult[]>`
       WITH client_accounts AS (
         SELECT
           ao.id as owner_id,
@@ -113,14 +158,14 @@ async function searchClientsInDb(query: string, limit: number) {
 }
 
 // Get client profile from the real database
-async function getClientProfileFromDb(clientName: string) {
+async function getClientProfileFromDb(clientName: string): Promise<{ accounts: AccountResult[]; holdings: HoldingResult[] } | null> {
   if (!clientsDb) return null;
 
   try {
     // Find client by name and get all their accounts
     const searchPattern = `%${clientName}%`;
 
-    const accounts = await clientsDb`
+    const accounts = await clientsDb<AccountResult[]>`
       SELECT
         ao.first_name,
         ao.last_name,
@@ -152,7 +197,7 @@ async function getClientProfileFromDb(clientName: string) {
 
     // Get holdings for the first account to show sample positions
     const firstAccount = accounts[0];
-    const holdings = await clientsDb`
+    const holdings = await clientsDb<HoldingResult[]>`
       SELECT
         h.ticker,
         h.asset_name,
@@ -207,21 +252,7 @@ export const searchClients = tool({
           success: true,
           source: "database",
           message: `Found ${dbResults.length} client(s) matching "${query}"`,
-          results: dbResults.map((client: {
-            full_name: string;
-            first_name: string;
-            last_name: string;
-            accounts: Array<{
-              id: string;
-              account_number: string;
-              name: string;
-              type: string;
-              value: number;
-              custodian: string;
-            }>;
-            total_aum: number;
-            account_count: number;
-          }) => ({
+          results: dbResults.map((client) => ({
             id: client.full_name, // Using full_name as identifier
             name: client.full_name?.trim() || `${client.first_name} ${client.last_name}`,
             firstName: client.first_name,
@@ -295,18 +326,15 @@ export const getClientProfile = tool({
       if (dbResult && dbResult.accounts.length > 0) {
         const firstAccount = dbResult.accounts[0];
         const totalAUM = dbResult.accounts.reduce(
-          (sum: number, acc: { market_value: number | string | null }) =>
-            sum + (parseFloat(String(acc.market_value)) || 0),
+          (sum, acc) => sum + (parseFloat(String(acc.market_value)) || 0),
           0
         );
         const totalCostBasis = dbResult.accounts.reduce(
-          (sum: number, acc: { cost_basis: number | string | null }) =>
-            sum + (parseFloat(String(acc.cost_basis)) || 0),
+          (sum, acc) => sum + (parseFloat(String(acc.cost_basis)) || 0),
           0
         );
         const totalUnrealizedGL = dbResult.accounts.reduce(
-          (sum: number, acc: { unrealized_gain_loss: number | string | null }) =>
-            sum + (parseFloat(String(acc.unrealized_gain_loss)) || 0),
+          (sum, acc) => sum + (parseFloat(String(acc.unrealized_gain_loss)) || 0),
           0
         );
 
@@ -325,19 +353,7 @@ export const getClientProfile = tool({
             unrealizedGainLossPercent: totalCostBasis > 0
               ? ((totalUnrealizedGL / totalCostBasis) * 100).toFixed(2) + "%"
               : "N/A",
-            accounts: dbResult.accounts.map((acc: {
-              account_id: string;
-              account_number: string;
-              account_name: string;
-              account_type: string;
-              market_value: number | string | null;
-              cost_basis: number | string | null;
-              unrealized_gain_loss: number | string | null;
-              custodian: string;
-              inception_date: string | null;
-              is_billable: boolean;
-              is_discretionary: boolean;
-            }) => ({
+            accounts: dbResult.accounts.map((acc) => ({
               id: acc.account_id,
               accountNumber: acc.account_number,
               name: acc.account_name,
@@ -350,15 +366,7 @@ export const getClientProfile = tool({
               isBillable: acc.is_billable,
               isDiscretionary: acc.is_discretionary,
             })),
-            topHoldings: dbResult.holdings.map((h: {
-              ticker: string;
-              asset_name: string;
-              asset_class: string;
-              units: number | string | null;
-              market_value: number | string | null;
-              cost_basis: number | string | null;
-              unrealized_gain_loss: number | string | null;
-            }) => ({
+            topHoldings: dbResult.holdings.map((h) => ({
               ticker: h.ticker,
               name: h.asset_name,
               assetClass: h.asset_class,
